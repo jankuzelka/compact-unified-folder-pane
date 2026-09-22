@@ -1,0 +1,14 @@
+[
+  {
+    "namespace": "CompactFolderPane",
+    "functions": [
+      {
+        "name": "reapply",
+        "type": "function",
+        "async": true,
+        "description": "Reapply the compact folder pane customization to currently open mail tabs.",
+        "parameters": []
+      }
+    ]
+  }
+]
