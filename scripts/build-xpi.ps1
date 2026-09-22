@@ -11,6 +11,9 @@ try {
     Copy-Item (Join-Path $project "manifest.json") $tmp
     Copy-Item (Join-Path $project "LICENSE") $tmp
     Copy-Item (Join-Path $project "api") $tmp -Recurse
+    if (Test-Path (Join-Path $project "icons")) {
+        Copy-Item (Join-Path $project "icons") $tmp -Recurse
+    }
 
     $zip = [System.IO.Path]::ChangeExtension($out, ".zip")
     Remove-Item $zip, $out -ErrorAction SilentlyContinue

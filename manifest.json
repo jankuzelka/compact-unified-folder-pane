@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Compact Unified Folder Pane",
   "description": "Adds a compact icon-rail state to Thunderbird's Unified Folders pane while preserving the native full-collapse behavior and folder-pane actions.",
-  "version": "0.1.12",
+  "version": "0.1.14",
   "author": "Jan Kuželka",
   "homepage_url": "https://kuzelka.dev",
   "browser_specific_settings": {
@@ -16,11 +16,26 @@
     "CompactFolderPane": {
       "schema": "api/CompactFolderPane/schema.json",
       "parent": {
-        "scopes": ["addon_parent"],
-        "paths": [["CompactFolderPane"]],
+        "scopes": [
+          "addon_parent"
+        ],
+        "paths": [
+          [
+            "CompactFolderPane"
+          ]
+        ],
         "script": "api/CompactFolderPane/implementation.js",
-        "events": ["startup"]
+        "events": [
+          "startup"
+        ]
       }
     }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "64": "icons/icon-64.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
   }
 }

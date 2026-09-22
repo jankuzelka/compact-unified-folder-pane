@@ -1,5 +1,17 @@
 # Changelog
 
+
+## 0.1.14
+
+- Fixed the add-on icon background to use transparency.
+- Updated the packaged icon set and release artifacts.
+
+
+## 0.1.13
+
+- Replaced the add-on icon with a revised design using a chevron motif.
+- Added the updated icon set to the packaged XPI and repository assets.
+
 All notable changes to this project will be documented in this file.
 
 ## [0.1.12] - 2026-09-22
