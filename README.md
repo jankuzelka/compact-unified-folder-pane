@@ -96,6 +96,9 @@ behavior.
 
 ## Installation
 
+Download the latest XPI from the
+[GitHub Releases](https://github.com/jankuzelka/compact-unified-folder-pane/releases) page.
+
 In Thunderbird:
 
 1. Open **Add-ons and Themes**.
