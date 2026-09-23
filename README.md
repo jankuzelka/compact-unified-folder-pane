@@ -79,9 +79,9 @@ Thunderbird 153     / Windows 10
 Thunderbird 156     / Windows 11
 ```
 
-The manifest currently supports Thunderbird `128.0` through `156.*`. The upper
-bound is intentionally conservative because the extension uses a small
-Experiment API against Thunderbird's internal Folder Pane UI.
+The manifest requires Thunderbird `128.0` or newer. Because the extension uses a
+small Experiment API against Thunderbird's internal Folder Pane UI, newer
+Thunderbird versions should still be tested when they are released.
 
 ## Technical note
 

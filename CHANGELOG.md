@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.15
+
+- Aligned the compact Folder Pane header height with the message-list header so the first folder row lines up with the first message row.
+- Nudged the expanded native Folder Pane action row down by 1 px for bottom-edge alignment.
+- Updated the add-on homepage URL to the GitHub project repository.
+- Renamed the internal Experiment API namespace from `CompactFolderPane` to `CompactUnifiedFolderPane`.
+- Removed the manifest maximum Thunderbird version limit; compatibility is now constrained only by the minimum supported version.
+- Adjusted the compact Folder Pane action menu for improved visual alignment.
 
 ## 0.1.14
 
