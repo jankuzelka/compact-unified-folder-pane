@@ -1,6 +1,6 @@
 [
   {
-    "namespace": "CompactFolderPane",
+    "namespace": "CompactUnifiedFolderPane",
     "functions": [
       {
         "name": "reapply",

@@ -1,11 +1,8 @@
 "use strict";
 
 (function (exports) {
-  // Prototype defaults. Kept together so they can later become options.
   const SETTINGS = Object.freeze({
     countsBreakpoint: 160,
-    // Collapse the header controls early so they do not impose a minimum width,
-    // but keep folder labels until the pane is much closer to the icon rail.
     toolbarBreakpoint: 100,
     iconBreakpoint: 120,
     railWidth: 60,
@@ -14,6 +11,9 @@
     rowPaddingBlock: 7,
     toolbarHideDelay: 180,
     toolbarFadeDuration: 85,
+    // Compensate for Thunderbird's inset above the first folder row.
+    headerAlignmentTrim: 2,
+    headerMinHeight: 28,
   });
 
   const STYLE_ID = "compact-folder-pane-extension-style";
@@ -24,9 +24,7 @@
   const STYLE_TEXT = `
 body.cfp-unified-only #folderPane {
   container-type: inline-size !important;
-  /* Thunderbird itself hard-codes 100px here to match the stock
-     collapse-width. Keep the CSS minimum in sync with our patched splitter
-     threshold, otherwise the pane can never physically reach icon mode. */
+  /* Override Thunderbird's 100px minimum to match the patched splitter threshold. */
   min-inline-size: ${SETTINGS.railWidth}px !important;
 }
 
@@ -37,11 +35,8 @@ body.cfp-unified-only #folderPane {
     display: none !important;
   }
 
-  /* At the same point where secondary folder details disappear, reclaim the
-     Compose label as well. Keep Thunderbird's native blue button and '+' glyph,
-     but turn it into a centered square icon control. Once the header is
-     portalled below toolbarBreakpoint this container rule no longer applies,
-     so the expanded floating native toolbar retains its original label. */
+  /* Moving the header outside the pane exempts it from this container rule,
+     preserving the Compose label in the floating toolbar. */
   body.cfp-unified-only #folderPaneWriteMessage {
     inline-size: 32px !important;
     min-inline-size: 32px !important;
@@ -55,9 +50,6 @@ body.cfp-unified-only #folderPane {
     align-items: center !important;
     justify-content: center !important;
     font-size: 0 !important;
-    /* Thunderbird positions the compose background icon for a text+icon
-       button. Once the label is hidden, explicitly center that native icon
-       inside our square control. */
     background-position: center center !important;
     background-repeat: no-repeat !important;
   }
@@ -77,9 +69,7 @@ body.cfp-unified-only #folderPane {
     gap: 0 !important;
   }
 
-  /* Pin the folder glyph to the geometric center of the rail. This avoids
-     account indicators, sparkle markers and other optional row elements
-     shifting the visible icon a few pixels left or right. */
+  /* Center independently of account indicators and other optional row elements. */
   body.cfp-unified-only #folderTree .icon {
     position: absolute !important;
     inset-inline-start: 50% !important;
@@ -90,10 +80,6 @@ body.cfp-unified-only #folderPane {
   }
 }
 
-/* In compact mode the *real* Thunderbird header is temporarily portalled to
-   the document body. This gets it outside #folderPane's strict paint
-   containment, allowing it to expand over the thread pane without resizing
-   the layout. */
 #folderPaneHeaderBar.cfp-floating-header {
   position: fixed !important;
   inset-inline-start: var(--cfp-header-inline-start) !important;
@@ -103,24 +89,22 @@ body.cfp-unified-only #folderPane {
   min-inline-size: var(--cfp-header-collapsed-width) !important;
   max-inline-size: var(--cfp-header-collapsed-width) !important;
   block-size: var(--cfp-header-height) !important;
+  min-block-size: var(--cfp-header-height) !important;
+  max-block-size: var(--cfp-header-height) !important;
   z-index: 1000 !important;
+  align-items: center !important;
   justify-content: center !important;
   gap: 0 !important;
   padding-inline: 0 !important;
+  padding-block: 0 !important;
   overflow: hidden !important;
   background-color: var(--sidebar-background) !important;
-  border-inline-end: 1px solid var(--sidebar-border) !important;
 }
 
-/* The synthetic trigger exists in the native header DOM so that cleanup and
-   portalling stay simple, but it must never appear in the normal-width UI. */
 #folderPaneHeaderBar > .cfp-action-trigger {
   display: none !important;
 }
 
-/* Compact state exposes one neutral trigger instead of pretending that one
-   of Thunderbird's real actions represents the whole toolbar. Hover/focus on
-   this trigger reveals the untouched native header actions. */
 #folderPaneHeaderBar.cfp-floating-header:not(.cfp-header-expanded)
   > button:not(.cfp-action-trigger) {
   position: absolute !important;
@@ -137,7 +121,9 @@ body.cfp-unified-only #folderPane {
   inline-size: 32px !important;
   min-inline-size: 32px !important;
   max-inline-size: 32px !important;
-  block-size: 32px !important;
+  block-size: min(32px, var(--cfp-header-height)) !important;
+  min-block-size: 0 !important;
+  max-block-size: 32px !important;
   margin: 0 !important;
   padding: 0 !important;
   color: inherit !important;
@@ -153,23 +139,11 @@ body.cfp-unified-only #folderPane {
   transform: translateY(-1px) !important;
 }
 
-/* Hover/focus reveals the original native toolbar as a floating overlay.
-   It is the original DOM node, not a clone, so Thunderbird's existing click,
-   context-menu, localization and visibility behaviour remain intact. */
 #folderPaneHeaderBar.cfp-floating-header.cfp-header-expanded {
   inline-size: max-content !important;
-  /* Never let the expanded hover hit-area become narrower than the compact
-     rail. If Thunderbird hides one or more native actions, max-content can
-     otherwise shrink below the rail width. A pointer in the now-uncovered
-     strip would trigger mouseleave; collapsing restores that strip under the
-     pointer, which triggers mouseenter again and creates an endless
-     expand/close loop. */
+  /* Keep the compact hover area covered to prevent mouseenter/mouseleave loops. */
   min-inline-size: var(--cfp-header-collapsed-width) !important;
   max-inline-size: none !important;
-  /* Keep the hover hit-box vertically identical to the compact state.
-     Changing this to auto makes the expanded toolbar shorter than the compact
-     header on some themes/densities. A pointer in that lower strip then causes
-     a self-sustaining enter -> expand -> leave -> collapse loop. */
   block-size: var(--cfp-header-height) !important;
   min-block-size: var(--cfp-header-height) !important;
   max-block-size: var(--cfp-header-height) !important;
@@ -184,11 +158,6 @@ body.cfp-unified-only #folderPane {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important;
 }
 
-/* Expansion is intentionally two-phase. The expanded geometry is committed
-   first with the native actions at opacity 0. JS then adds
-   .cfp-header-visible on the next animation frame. This guarantees a real
-   rendered start state for the opacity transition instead of asking Gecko to
-   resolve geometry, visibility and opacity in a single style change. */
 #folderPaneHeaderBar.cfp-floating-header.cfp-header-expanded
   > button:not(.cfp-action-trigger) {
   position: static !important;
@@ -198,35 +167,33 @@ body.cfp-unified-only #folderPane {
   transition: opacity ${SETTINGS.toolbarFadeDuration}ms ease-out !important;
 }
 
+/* Inset the native menu button from the overlay's right edge. */
+#folderPaneHeaderBar.cfp-floating-header.cfp-header-expanded
+  > #folderPaneMoreButton {
+}
+
 #folderPaneHeaderBar.cfp-floating-header.cfp-header-expanded.cfp-header-visible
   > button:not(.cfp-action-trigger) {
   opacity: 1 !important;
   pointer-events: auto !important;
 }
 
-/* While closing, keep the expanded geometry fixed and only remove the visible
-   phase. transitionend then returns the header to the compact rail. */
+/* Preserve expanded geometry until transitionend completes the fade-out. */
 #folderPaneHeaderBar.cfp-floating-header.cfp-header-expanded.cfp-header-closing
   > button:not(.cfp-action-trigger) {
   opacity: 0 !important;
   pointer-events: none !important;
 }
 
-/* The compact trigger only represents the toolbar. Once expanded, show the
-   native Thunderbird controls and get the trigger out of the way. */
 #folderPaneHeaderBar.cfp-floating-header.cfp-header-expanded
   > .cfp-action-trigger {
   display: none !important;
 }
 
-/* Never defeat Thunderbird's own [hidden] state when it has been configured
-   to omit a header action. */
 #folderPaneHeaderBar.cfp-floating-header.cfp-header-expanded > button[hidden] {
   display: none !important;
 }
 
-/* Placeholder keeps the folder tree at exactly the same vertical position
-   while the real header is portalled out of #folderPane. */
 .cfp-header-placeholder {
   flex: 0 0 var(--cfp-placeholder-height) !important;
   block-size: var(--cfp-placeholder-height) !important;
@@ -253,9 +220,6 @@ body.cfp-unified-only #folderPane {
   }
 
   function cancelFadeTimer(state) {
-    // Kept only as a safety fallback in case Gecko suppresses transitionend
-    // (for example during teardown). Normal animation completion is driven by
-    // the actual opacity transition event, not by a guessed timer.
     if (state.fadeTimer !== null) {
       state.window.clearTimeout(state.fadeTimer);
       state.fadeTimer = null;
@@ -283,11 +247,8 @@ body.cfp-unified-only #folderPane {
   function startHeaderFadeIn(state) {
     cancelOpenFrame(state);
 
-    // #folderPaneHeaderBar has just changed from compact geometry to expanded
-    // geometry. Force that opacity:0 start state to be computed, then wait for
-    // the next frame before requesting opacity:1. This prevents Gecko from
-    // coalescing both states into one paint (the source of the previous
-    // fade-then-pop flicker).
+    // Flush the opacity:0 state before the next frame so Gecko does not
+    // coalesce it with opacity:1 and skip the transition.
     void state.headerBar.getBoundingClientRect();
     state.openFrame = state.window.requestAnimationFrame(() => {
       state.openFrame = null;
@@ -319,8 +280,7 @@ body.cfp-unified-only #folderPane {
     if (expanded) {
       state.headerExpanded = true;
 
-      // If a fade-out is already in progress, simply reverse the same opacity
-      // transition from its current value. Geometry is already expanded.
+      // Reverse an in-progress fade-out without resetting opacity.
       if (state.headerBar.classList.contains("cfp-header-closing")) {
         cancelOpenFrame(state);
         state.headerBar.classList.remove("cfp-header-closing");
@@ -344,9 +304,7 @@ body.cfp-unified-only #folderPane {
 
     cancelOpenFrame(state);
 
-    // If the opening phase has not reached opacity:1 yet, there is nothing to
-    // animate out. Collapse immediately instead of waiting for a transition
-    // that cannot fire.
+    // Before the visible phase, no fade-out transition can fire.
     if (!state.headerBar.classList.contains("cfp-header-visible")) {
       finishHeaderCollapse(state);
       return;
@@ -355,8 +313,7 @@ body.cfp-unified-only #folderPane {
     state.headerBar.classList.add("cfp-header-closing");
     state.headerBar.classList.remove("cfp-header-visible");
 
-    // transitionend is authoritative. This longer timeout is only a teardown /
-    // no-transition fallback and should not determine normal visual timing.
+    // Fall back if Gecko suppresses transitionend, such as during teardown.
     state.fadeTimer = state.window.setTimeout(() => {
       state.fadeTimer = null;
       if (state.headerBar.classList.contains("cfp-header-closing")) {
@@ -391,10 +348,46 @@ body.cfp-unified-only #folderPane {
     }, SETTINGS.toolbarHideDelay);
   }
 
+  function getCompactHeaderHeight(state, fallbackHeight) {
+    // The folder header can wrap at narrow widths; use the message-list
+    // header as the height reference to keep the first rows aligned.
+    if (isElementActuallyVisible(state.threadPaneHeaderBar)) {
+      const referenceHeight = state.threadPaneHeaderBar.getBoundingClientRect().height;
+      if (Number.isFinite(referenceHeight) && referenceHeight > 0) {
+        const previousCompactHeight = Math.max(32, referenceHeight);
+        return Math.max(
+          SETTINGS.headerMinHeight,
+          previousCompactHeight - SETTINGS.headerAlignmentTrim
+        );
+      }
+    }
+
+    return Math.max(
+      SETTINGS.headerMinHeight,
+      Math.max(32, fallbackHeight) - SETTINGS.headerAlignmentTrim
+    );
+  }
+
+  function syncCompactHeaderHeight(state) {
+    if (!state.portalActive) {
+      return;
+    }
+
+    const height = getCompactHeaderHeight(state, state.headerHeight);
+    if (height === state.headerHeight) {
+      return;
+    }
+
+    state.headerHeight = height;
+    state.placeholder?.style.setProperty("--cfp-placeholder-height", `${height}px`);
+  }
+
   function syncFloatingHeaderGeometry(state) {
     if (!state.portalActive) {
       return;
     }
+
+    syncCompactHeaderHeight(state);
 
     const paneRect = state.folderPane.getBoundingClientRect();
     const width = Math.max(paneRect.width, SETTINGS.railWidth);
@@ -411,7 +404,7 @@ body.cfp-unified-only #folderPane {
     }
 
     const headerRect = state.headerBar.getBoundingClientRect();
-    state.headerHeight = Math.max(1, headerRect.height);
+    state.headerHeight = getCompactHeaderHeight(state, headerRect.height);
 
     const placeholder = state.document.createElement("div");
     placeholder.className = "cfp-header-placeholder";
@@ -421,8 +414,7 @@ body.cfp-unified-only #folderPane {
     state.headerParent.insertBefore(placeholder, state.headerBar);
     state.placeholder = placeholder;
 
-    // Move the real native toolbar outside #folderPane, whose `contain: strict`
-    // and `overflow: hidden` would otherwise clip any hover expansion.
+    // Escape #folderPane's containment and clipping while retaining native handlers.
     state.document.body.appendChild(state.headerBar);
     state.headerBar.classList.add("cfp-floating-header");
     state.portalActive = true;
@@ -592,10 +584,7 @@ body.cfp-unified-only #folderPane {
       return;
     }
 
-    // Direct actions (Compose, a simple Get Messages action, etc.) should fold
-    // the overlay away immediately after activation. If Thunderbird opened one
-    // of its native popups, keep the toolbar visible until that popup closes.
-    // A short delay lets popupshown / XUL popup state settle first.
+    // Let popupshown and XUL popup state settle before deciding to collapse.
     state.window.setTimeout(() => {
       if (!state.popupOpen && !isAnyHeaderPopupOpen(state)) {
         forceHeaderCollapse(state);
@@ -620,8 +609,7 @@ body.cfp-unified-only #folderPane {
       return;
     }
 
-    // All native action buttons use the same opacity transition. The first
-    // completed action therefore marks the end of the group fade-out.
+    // All buttons share the transition, so the first completion ends the fade-out.
     finishHeaderCollapse(state);
   }
 
@@ -682,7 +670,7 @@ body.cfp-unified-only #folderPane {
 
       state.styleElement?.remove();
     } catch (error) {
-      console.error("Compact Folder Pane: cleanup failed", error);
+      console.error("Compact Unified Folder Pane: cleanup failed", error);
     }
 
     try {
@@ -702,9 +690,9 @@ body.cfp-unified-only #folderPane {
     const folderPane = document.getElementById("folderPane");
     const splitter = document.getElementById("folderPaneSplitter");
     const headerBar = document.getElementById("folderPaneHeaderBar");
+    const threadPaneHeaderBar = document.getElementById("threadPaneHeaderBar");
     const folderTree = document.getElementById("folderTree");
 
-    // Feature detection: leave the UI untouched if internals differ.
     if (
       !document.head ||
       !document.body ||
@@ -736,6 +724,7 @@ body.cfp-unified-only #folderPane {
       folderPane,
       splitter,
       headerBar,
+      threadPaneHeaderBar,
       folderTree,
       headerParent: headerBar.parentNode,
       headerNextSibling: headerBar.nextSibling,
@@ -774,10 +763,6 @@ body.cfp-unified-only #folderPane {
       onPopupHidden: null,
     };
 
-    // The narrower splitter threshold is enabled only while Unified Folders is
-    // the sole active folder mode. Other folder modes keep Thunderbird's stock
-    // geometry and collapse behaviour.
-
     state.onWindowResize = () => {
       if (state.portalActive) {
         syncFloatingHeaderGeometry(state);
@@ -807,6 +792,9 @@ body.cfp-unified-only #folderPane {
     if (typeof window.ResizeObserver === "function") {
       state.resizeObserver = new window.ResizeObserver(() => updateCompactState(state));
       state.resizeObserver.observe(folderPane);
+      if (threadPaneHeaderBar) {
+        state.resizeObserver.observe(threadPaneHeaderBar);
+      }
     }
 
     if (typeof window.MutationObserver === "function") {
@@ -819,9 +807,7 @@ body.cfp-unified-only #folderPane {
         attributeFilter: ["class"],
       });
 
-      // Thunderbird's own activeModes getter is derived from the direct
-      // children of #folderTree and their data-mode values. Observe exactly
-      // that structure so the rail is active only for Unified Folders alone.
+      // Thunderbird derives activeModes from #folderTree's direct children.
       state.folderTreeMutationObserver = new window.MutationObserver(() => {
         syncFolderModeState(state);
       });
@@ -829,11 +815,7 @@ body.cfp-unified-only #folderPane {
         childList: true,
       });
 
-      // Thunderbird can show/hide/reconfigure header actions from its own menu.
       state.headerMutationObserver = new window.MutationObserver(() => {
-        // The header itself can be hidden from Thunderbird's own options. In
-        // that case remove the portal and its placeholder completely. Native
-        // button visibility changes are otherwise inherited automatically.
         if (state.headerBar.hidden) {
           exitHeaderPortal(state);
           return;
@@ -910,7 +892,7 @@ body.cfp-unified-only #folderPane {
     );
   }
 
-  class CompactFolderPane extends ExtensionCommon.ExtensionAPI {
+  class CompactUnifiedFolderPane extends ExtensionCommon.ExtensionAPI {
     onStartup() {
       Services.obs.addObserver(onChromeDocumentCreated, "chrome-document-global-created");
       patchExistingMailTabs();
@@ -918,7 +900,7 @@ body.cfp-unified-only #folderPane {
 
     getAPI(context) {
       return {
-        CompactFolderPane: {
+        CompactUnifiedFolderPane: {
           async reapply() {
             patchExistingMailTabs();
           },
@@ -942,5 +924,5 @@ body.cfp-unified-only #folderPane {
     }
   }
 
-  exports.CompactFolderPane = CompactFolderPane;
+  exports.CompactUnifiedFolderPane = CompactUnifiedFolderPane;
 })(this);
