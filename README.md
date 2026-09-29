@@ -90,9 +90,18 @@ the splitter width or collapse threshold needed for the compact intermediate
 state.
 
 The extension therefore uses a deliberately small Experiment API for the
-Folder Pane UI. This can cause Thunderbird to display a broad full-access
-permission warning even though the extension itself is limited to this UI
-behavior.
+Folder Pane UI. Thunderbird displays a broad full-access permission warning
+because Experiment APIs can access Thunderbird internals. This extension uses
+that access only to adjust the Folder Pane UI; it does not read or transmit
+message content and includes no telemetry or extension-initiated network
+requests. Thunderbird itself contacts GitHub when checking for add-on updates.
+
+Thunderbird Add-ons (ATN) rejected version 0.1.14 under its current policy
+pausing new add-ons with custom Experiment APIs. The review stopped at that
+point; no full code, security or functionality review was performed. The
+[complete source code](https://github.com/jankuzelka/compact-unified-folder-pane)
+is publicly available, but the extension is not endorsed or reviewed by
+Thunderbird.
 
 ## Installation
 
@@ -103,7 +112,21 @@ In Thunderbird:
 
 1. Open **Add-ons and Themes**.
 2. Open the gear menu and choose **Install Add-on From File**.
-3. Select the downloaded XPI.
+3. Select the downloaded XPI and confirm Thunderbird's permission prompt.
+
+### Updates
+
+Starting with version **0.1.15**, the add-on is configured to check a
+[self-hosted update manifest](updates.json) and download published XPI files
+from GitHub Releases. Automatic updates depend on Thunderbird accepting the
+published package and have to be verified after the release is live.
+
+If you installed **0.1.14** or an earlier version, install **0.1.15** from
+GitHub Releases once to enable the new update configuration. Keep the add-on ID
+unchanged so the new XPI updates the existing installation.
+
+For problems or feature requests, open an
+[issue](https://github.com/jankuzelka/compact-unified-folder-pane/issues).
 
 ## Development
 
@@ -121,6 +144,9 @@ To build an XPI on Windows:
 ```
 
 The generated XPI is a ZIP archive with `manifest.json` at its root.
+`updates.json` is hosted in the GitHub repository; it must **not** be bundled
+into the XPI. Publish the XPI asset first, then update `updates.json` to point
+to the released asset when releasing a new version.
 
 ## Support
 

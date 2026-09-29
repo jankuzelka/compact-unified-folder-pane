@@ -8,7 +8,8 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "compact-unified-folder-pane@kuzelka.dev",
-      "strict_min_version": "128.0"
+      "strict_min_version": "128.0",
+      "update_url": "https://raw.githubusercontent.com/jankuzelka/compact-unified-folder-pane/main/updates.json"
     }
   },
   "icons": {

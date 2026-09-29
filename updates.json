@@ -1,0 +1,17 @@
+{
+  "addons": {
+    "compact-unified-folder-pane@kuzelka.dev": {
+      "updates": [
+        {
+          "version": "0.1.15",
+          "update_link": "https://github.com/jankuzelka/compact-unified-folder-pane/releases/download/v0.1.15/compact-unified-folder-pane-0.1.15.xpi",
+          "applications": {
+            "gecko": {
+              "strict_min_version": "128.0"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

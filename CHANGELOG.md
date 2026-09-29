@@ -8,6 +8,8 @@
 - Renamed the internal Experiment API namespace from `CompactFolderPane` to `CompactUnifiedFolderPane`.
 - Removed the manifest maximum Thunderbird version limit; compatibility is now constrained only by the minimum supported version.
 - Adjusted the compact Folder Pane action menu for improved visual alignment.
+- Added a self-hosted update manifest and update URL for GitHub Releases distribution.
+- Documented installation, update migration and the current ATN review restriction.
 
 ## 0.1.14
 
