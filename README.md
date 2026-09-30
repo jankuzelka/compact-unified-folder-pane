@@ -148,15 +148,15 @@ The generated XPI is a ZIP archive with `manifest.json` at its root.
 into the XPI. Publish the XPI asset first, then update `updates.json` to point
 to the released asset when releasing a new version.
 
+## Author
+
+Jan Kuželka — [https://kuzelka.dev](https://kuzelka.dev)
+
 ## Support
 
 If you find this extension useful, you can support its continued development.
 
 [![Support my work](https://img.shields.io/badge/Support%20my%20work-2F81F7?logo=buy-me-a-coffee&logoColor=white)](https://buymeacoffee.com/jankuzelka)
-
-## Author
-
-Jan Kuželka — [https://kuzelka.dev](https://kuzelka.dev)
 
 ## License
 
